@@ -1,7 +1,8 @@
 import Question from "./Question";
 import Player from "./Player";
-import { QuestionMode } from "../types/enum/QuestionMode";
-import { GameMode } from "../types/enum/GameMode.ts";
+import {QuestionMode} from "../types/enum/QuestionMode";
+import {GameMode} from "../types/enum/GameMode.ts";
+import player from "./Player";
 
 export class Quiz {
     public isRunning: boolean = false;
@@ -16,45 +17,95 @@ export class Quiz {
     private totalAmountOfQuestionToBeAsked: number = 0;
     private amountOfQuestionsAlreadyAsked: number = 0;
 
-    public constructor(duration: number) { }
+    public constructor(duration: number) {
+        this.quizDuration = duration;
+        this.currentPlayerIndex = 0;
+        this.currentQuestionIndex = 0;
+        this.gameMode = GameMode.Single;
+        this.questionMode = QuestionMode.Custom;
+        this.numberOfPlayers = 1;
+    }
 
-    public getGameMode() { }
+    public getGameMode() {
+        return this.gameMode;
+    }
 
-    public getQuestionMode(): QuestionMode { return QuestionMode.Custom; }
+    public getQuestionMode(): QuestionMode
+    {
+        return this.questionMode;
+    }
 
-    public getNumberOfPlayers(): number { return 0; }
+    public getNumberOfPlayers(): number { return this.numberOfPlayers; }
 
-    public getCurrentPlayerName(): string { return ""; }
+    //public getCurrentPlayerName(): string {  }
 
-    public getCurrentQuestion() { }
+    public getCurrentQuestion() { return this.questions }
 
-    public updateCurrentPlayerScore(amount: number) { }
+    //public updateCurrentPlayerScore(amount: number) {  }
 
-    public setQuestionMode(mode: QuestionMode) { }
+    public setQuestionMode(mode: QuestionMode) { this.questionMode = mode; }
 
-    private updateTotalAmountOfQuestionToBeAsked() { }
+    private updateTotalAmountOfQuestionToBeAsked() { this.totalAmountOfQuestionToBeAsked = this.questions.length * this.numberOfPlayers; }
 
-    public addQuestion(q: Question) { }
+    public addQuestion(q: Question) { this.questions.push(q) }
 
-    public addPlayer(name: string) { }
+    public addPlayer(name: string) { let player = new Player(name);
+    this.players.push(player);}
 
-    private getAmountOfPlayers() { }
+    private getAmountOfPlayers() { return this.players.length }
 
-    public removePlayer(name: string) { }
+    public removePlayer(name: string)
+    {
+        let player = this.players;
+        let removedPlayers = player.indexOf(player);
 
-    public startQuiz() { }
+        let removeName = this.players.filter((player) => player.name === name);
+        return removeName;
+    }
 
-    public testIfAnswerIsCorrect(answer: string) { }
+    public startQuiz() {
 
-    public nextQuestion() { }
+        this.isRunning = true;
+        this.getAmountOfPlayers();
+        this.updateTotalAmountOfQuestionToBeAsked();
+    }
 
-    private shuffleAnswersInQuestions() { }
+    /*public testIfAnswerIsCorrect(answer: string) {
+        if () {
 
-    private endQuiz() { }
+        }
+    }*/
 
-    public setGameMode(gameMode: GameMode, amountOfPlayers: number) { }
+    //public nextQuestion() {}
 
-    public sortPlayersByScore() { }
+    /*private shuffleAnswersInQuestions() {
+        for (const question in this.questions) {
 
-    public resetGame() { }
+        }
+    }*/
+
+    private endQuiz() { this.isRunning = false; }
+
+    public setGameMode(gameMode: GameMode, amountOfPlayers: number)
+    {
+        this.gameMode = gameMode;
+        this.numberOfPlayers = amountOfPlayers;
+        this.currentPlayerIndex = 0;
+        this.currentQuestionIndex = 0;
+    }
+
+    //public sortPlayersByScore() {}
+
+    public resetGame() {
+        this.isRunning = false;
+        this.questionMode = QuestionMode.Custom;
+        this.questions = [];
+        this.players = [];
+        this.gameMode = GameMode.Single;
+        this.numberOfPlayers = 1;
+        this.currentQuestionIndex = 0;
+        this.currentPlayerIndex = 0;
+        this.totalAmountOfQuestionToBeAsked = 0;
+        this.amountOfQuestionsAlreadyAsked = 0;
+    }
 }

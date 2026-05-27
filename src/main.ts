@@ -11,6 +11,3 @@ class Main {
 }
 
 new Main();
-
-
-
