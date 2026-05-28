@@ -12,7 +12,7 @@ export class Quiz {
     private currentQuestionIndex: number;
     private currentPlayerIndex: number;
     private gameMode: GameMode;
-    private questionMode: QuestionMode;
+    public questionMode: QuestionMode;
     private numberOfPlayers: number = 1;
     private totalAmountOfQuestionToBeAsked: number = 0;
     private amountOfQuestionsAlreadyAsked: number = 0;
@@ -41,7 +41,10 @@ export class Quiz {
 
     public getCurrentQuestion() { return this.questions }
 
-    //public updateCurrentPlayerScore(amount: number) {  }
+    public updateCurrentPlayerScore(amount: number)
+    {
+
+    }
 
     public setQuestionMode(mode: QuestionMode) { this.questionMode = mode; }
 
@@ -56,15 +59,11 @@ export class Quiz {
 
     public removePlayer(name: string)
     {
-        let player = this.players;
-        let removedPlayers = player.indexOf(player);
-
-        let removeName = this.players.filter((player) => player.name === name);
-        return removeName;
+        let removeName = this.players.filter((player) => player.name !== name);
+        return this.players = removeName;
     }
 
     public startQuiz() {
-
         this.isRunning = true;
         this.getAmountOfPlayers();
         this.updateTotalAmountOfQuestionToBeAsked();
