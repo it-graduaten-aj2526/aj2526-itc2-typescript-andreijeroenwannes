@@ -26,7 +26,7 @@ export class Quiz {
 
     public getCurrentPlayerName(): string { return ""; }
 
-    public getCurrentQuestion() { }
+        public getCurrentQuestion() { }
 
     public updateCurrentPlayerScore(amount: number) { }
 
@@ -57,4 +57,4 @@ export class Quiz {
     public sortPlayersByScore() { }
 
     public resetGame() { }
-}
+}   

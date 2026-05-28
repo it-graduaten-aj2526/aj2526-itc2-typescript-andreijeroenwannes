@@ -18,5 +18,3 @@ class Player {
 }
 
 export default Player;
-
-//test

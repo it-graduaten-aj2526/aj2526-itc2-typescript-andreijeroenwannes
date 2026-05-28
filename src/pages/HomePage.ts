@@ -51,9 +51,43 @@ export class HomePage {
         getElementWrapper<HTMLInputElement>('#input-question-mode').addEventListener('change', () => this.toggleQuestionModeLabel());
     }
 
-    private validateFields = (): boolean => {
+private validateFields = (): boolean => {
+
+    const inputQuestionAmount = getElementWrapper<HTMLInputElement>('#input-question-amount');
+
+    if (inputQuestionAmount.value.trim() === '') {
+        displayAlert('Geef het aantal vragen in');
         return false;
     }
+
+    const amountQuestions = parseInt(inputQuestionAmount.value);
+
+    if (isNaN(amountQuestions) || amountQuestions <= 0) {
+        displayAlert('Aantal vragen moet groter zijn dan 0');
+        return false;
+    }
+
+    const inputGameMode = getElementWrapper<HTMLInputElement>('#input-game-mode');
+
+    if (inputGameMode.checked) {
+
+        const inputAmountPlayers = getElementWrapper<HTMLInputElement>('#input-amount-players');
+
+        if (inputAmountPlayers.value.trim() === '') {
+            displayAlert('Geef het aantal spelers in');
+            return false;
+        }
+
+        const amountPlayers = parseInt(inputAmountPlayers.value);
+
+        if (isNaN(amountPlayers) || amountPlayers < 2) {
+            displayAlert('Multiplayer vereist minstens 2 spelers');
+            return false;
+        }
+    }
+
+    return true;
+}
 
     private saveConfiguration = () => {
         if (!this.validateFields()) {
@@ -78,10 +112,32 @@ export class HomePage {
 
         playersPage.init(getElementWrapper<HTMLDivElement>('#content'))
     }
+private toggleQuestionModeLabel = () => {
 
-    private toggleQuestionModeLabel = () => {
-    }
+    const inputQuestionMode = getElementWrapper<HTMLInputElement>('#input-question-mode');
 
-    private toggleGameModeLabel = () => {
+    const label = getElementWrapper<HTMLSpanElement>('#lbl-question-mode');
+
+    if (inputQuestionMode.checked) {
+        label.textContent = 'API';
+    } else {
+        label.textContent = 'Free input';
     }
+}
+private toggleGameModeLabel = () => {
+
+    const inputGameMode = getElementWrapper<HTMLInputElement>('#input-game-mode');
+
+    const label = getElementWrapper<HTMLSpanElement>('#lbl-game-mode');
+
+    const rowPlayers = getElementWrapper<HTMLDivElement>('#rowAmountPlayers');
+
+    if (inputGameMode.checked) {
+        label.textContent = 'Multiplayer';
+        showEl(rowPlayers);
+    } else {
+        label.textContent = 'Single player';
+        hideEl(rowPlayers);
+    }
+}
 }
