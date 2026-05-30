@@ -124,6 +124,28 @@ export class HomePage {
         return true;
     }
 
+    const inputGameMode = getElementWrapper<HTMLInputElement>('#input-game-mode');
+
+    if (inputGameMode.checked) {
+
+        const inputAmountPlayers = getElementWrapper<HTMLInputElement>('#input-amount-players');
+
+        if (inputAmountPlayers.value.trim() === '') {
+            displayAlert('Geef het aantal spelers in');
+            return false;
+        }
+
+        const amountPlayers = parseInt(inputAmountPlayers.value);
+
+        if (isNaN(amountPlayers) || amountPlayers < 2) {
+            displayAlert('Multiplayer vereist minstens 2 spelers');
+            return false;
+        }
+    }
+
+    return true;
+}
+
     private saveConfiguration = () => {
 
         if (!this.validateFields()) {
@@ -167,6 +189,7 @@ export class HomePage {
             getElementWrapper<HTMLDivElement>('#content')
         );
     }
+private toggleQuestionModeLabel = () => {
 
     private toggleQuestionModeLabel = () => {
 
@@ -179,6 +202,14 @@ export class HomePage {
         label.textContent =
             inputQuestionMode.checked ? "API" : "Free input";
     }
+}
+private toggleGameModeLabel = () => {
+
+    const inputGameMode = getElementWrapper<HTMLInputElement>('#input-game-mode');
+
+    const label = getElementWrapper<HTMLSpanElement>('#lbl-game-mode');
+
+    const rowPlayers = getElementWrapper<HTMLDivElement>('#rowAmountPlayers');
 
     private toggleGameModeLabel = () => {
 
@@ -202,4 +233,5 @@ export class HomePage {
             hideEl(rowAmountPlayers);
         }
     }
+}
 }
