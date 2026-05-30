@@ -104,6 +104,11 @@ export class PlayersPage {
 
     private addPlayer() {
 
+        if (quiz.players.length >= quiz.getNumberOfPlayers()) {
+            displayAlert('Maximum aantal spelers bereikt');
+            return;
+        }
+
         if (!this.validatePlayerName()) {
             return;
         }
