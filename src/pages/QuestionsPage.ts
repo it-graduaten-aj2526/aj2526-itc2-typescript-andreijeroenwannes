@@ -8,7 +8,6 @@ import Question from "../models/Question.ts";
 
 const questionService = new QuestionService();
 
-// language=HTML
 const apiModeHtml: string = `
     <h2>API questions</h2>
     <p>Configure the API for retrieving questions</p>
@@ -16,7 +15,6 @@ const apiModeHtml: string = `
     <select class="form-select mt-2" id="input-category" data-testid="input-category"></select>
     <button id="btn-fetch-questions" class="btn btn-primary mt-2" data-testid="btn-fetch-questions">Fetch questions</button>`;
 
-// language=HTML
 const customModeHtml: string = `
     <h2>Custom questions</h2>
     <div class="row mb-3">
@@ -35,9 +33,10 @@ const customModeHtml: string = `
         <label for="input-incorrect-answer" class="col-sm-2 col-form-label">Incorrect answer</label>
         <div class="col-sm-10">
             <div class="input-group">
-                <input id="input-incorrect-answer" type="text" class="form-control" aria-label="Recipient's username"
-                       aria-describedby="button-addon2" data-testid="input-incorrect-answer">
-                <button class="btn btn-outline-secondary" type="button" id="btn-add-incorrect-answer" data-testid="btn-add-incorrect-answer">Add</button>
+                <input id="input-incorrect-answer" type="text" class="form-control"
+                       data-testid="input-incorrect-answer">
+                <button class="btn btn-outline-secondary" type="button" id="btn-add-incorrect-answer"
+                        data-testid="btn-add-incorrect-answer">Add</button>
             </div>
         </div>
     </div>
@@ -52,21 +51,14 @@ const customModeHtml: string = `
         <tbody>
         <tr>
             <td id="output-question" data-testid="output-question"></td>
-            <td>
-                <ul id="output-correct-answer" data-testid="output-correct-answer">
-                </ul>
-            </td>
-            <td>
-                <ul id="output-incorrect-answers" data-testid="output-incorrect-answers">
-                </ul>
-            </td>
+            <td><ul id="output-correct-answer" data-testid="output-correct-answer"></ul></td>
+            <td><ul id="output-incorrect-answers" data-testid="output-incorrect-answers"></ul></td>
         </tr>
         </tbody>
     </table>
     <button type="submit" class="btn btn-primary" id="btn-submit-question" data-testid="btn-submit-question">Submit question</button>
 `;
 
-// language=HTML
 const questionsHtml: string = `
     <h2 class="mt-2">Confirmed questions <span id="question-counter" data-testid="question-counter">(0/0)</span></h2>
     <div id="questions" data-testid="questions">No questions to display</div>
@@ -82,17 +74,48 @@ const fillCategories = async () => {
         option.text = c.name;
         select.appendChild(option);
     });
-}
+};
 
 const fillDifficulty = async () => {
     const select = getElementWrapper<HTMLSelectElement>("#input-difficulty");
 
-    Object.keys(Difficulty).forEach(key => {
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.text = "Any difficulty";
+    select.appendChild(emptyOption);
+
+    Object.values(Difficulty).forEach(difficulty => {
         const option = document.createElement("option");
-        option.value = key.toLowerCase();
-        option.text = key;
+        option.value = difficulty;
+        option.text = difficulty;
         select.appendChild(option);
     });
+};
+
+const updateQuestionList = () => {
+    const questionsElement = getElementWrapper<HTMLDivElement>("#questions");
+    const questionCounter = getElementWrapper<HTMLSpanElement>("#question-counter");
+    const startButton = getElementWrapper<HTMLButtonElement>("#btn-start-quiz");
+
+    questionCounter.textContent = `${quiz.questions.length}/${quiz.quizDuration}`;
+
+    if (quiz.questions.length === 0) {
+        questionsElement.textContent = "No questions to display";
+    } else {
+        questionsElement.innerHTML = "";
+
+        quiz.questions.forEach(question => {
+            const p = document.createElement("p");
+            p.textContent = question.question;
+            questionsElement.appendChild(p);
+        });
+    }
+
+    if (quiz.questions.length >= quiz.quizDuration) {
+        enableEl(startButton);
+    } else {
+        disableEl(startButton);
+    }
 };
 
 export class QuestionsPage {
@@ -123,144 +146,114 @@ export class QuestionsPage {
         `;
 
         contentElement.innerHTML = fullHtml;
+        updateQuestionList();
+
+        if (quiz.getQuestionMode() === QuestionMode.Api) {
+            fillDifficulty();
+            fillCategories();
+
+            const fetchButton = getElementWrapper<HTMLButtonElement>("#btn-fetch-questions");
+
+            fetchButton.addEventListener("click", async () => {
+                const category = Number(getElementWrapper<HTMLSelectElement>("#input-category").value);
+                const difficulty = getElementWrapper<HTMLSelectElement>("#input-difficulty").value;
+
+                const questions = await questionService.getQuestions(quiz.quizDuration, category, difficulty);
+
+                questions.forEach(question => quiz.addQuestion(question));
+                updateQuestionList();
+            });
+        }
 
         if (quiz.getQuestionMode() === QuestionMode.Custom) {
-            getElementWrapper<HTMLButtonElement>('#btn-add-incorrect-answer')
-                .addEventListener('click', () => this.addIncorrectAnswer());
+            const questionInput = getElementWrapper<HTMLInputElement>("#input-question");
+            const correctAnswerInput = getElementWrapper<HTMLInputElement>("#input-correct-answer");
+            const incorrectAnswerInput = getElementWrapper<HTMLInputElement>("#input-incorrect-answer");
 
-            getElementWrapper<HTMLButtonElement>('#btn-submit-question')
-                .addEventListener('click', () => this.submitQuestion());
-        } else {
-            fillCategories();
-            fillDifficulty();
+            const outputQuestion = getElementWrapper<HTMLTableCellElement>("#output-question");
+            const outputCorrectAnswer = getElementWrapper<HTMLUListElement>("#output-correct-answer");
+            const outputIncorrectAnswers = getElementWrapper<HTMLUListElement>("#output-incorrect-answers");
 
-            getElementWrapper<HTMLButtonElement>('#btn-fetch-questions')
-                .addEventListener('click', () => this.fetchQuestions());
-        }
+            const addIncorrectAnswerButton = getElementWrapper<HTMLButtonElement>("#btn-add-incorrect-answer");
+            const submitQuestionButton = getElementWrapper<HTMLButtonElement>("#btn-submit-question");
 
-        getElementWrapper<HTMLButtonElement>('#btn-start-quiz')
-            .addEventListener('click', () => {
-                quiz.startQuiz();
-                quizPage.init(getElementWrapper<HTMLDivElement>('#content'));
+            addIncorrectAnswerButton.addEventListener("click", () => {
+                const incorrectAnswer = incorrectAnswerInput.value.trim();
+
+                if (incorrectAnswer === "") {
+                    displayAlert("Incorrect answer can not be empty");
+                    return;
+                }
+
+                this.tempQuestion.addAnswer({ text: incorrectAnswer, isCorrect: false });
+
+                const li = document.createElement("li");
+                li.textContent = incorrectAnswer;
+                outputIncorrectAnswers.appendChild(li);
+
+                incorrectAnswerInput.value = "";
             });
 
-        this.updateQuestionCounter();
-        this.renderQuestions();
-    }
+            submitQuestionButton.addEventListener("click", () => {
+                const questionText = questionInput.value.trim();
+                const correctAnswer = correctAnswerInput.value.trim();
 
-    private addIncorrectAnswer = () => {
-        const input = getElementWrapper<HTMLInputElement>('#input-incorrect-answer');
-        const answer = input.value.trim();
+                const wordCount = questionText.split(/\s+/).filter(word => word !== "").length;
 
-        if (answer === '') {
-            displayAlert('Incorrect antwoord mag niet leeg zijn');
-            return;
+                if (wordCount < 4) {
+                    displayAlert("Question should contain at least 4 words");
+                    return;
+                }
+
+                outputQuestion.textContent = questionText;
+                this.tempQuestion.question = questionText;
+
+                if (correctAnswer === "") {
+                    displayAlert("Question should contain at least 1 correct answer which can not be empty");
+                    return;
+                }
+
+                outputCorrectAnswer.innerHTML = "";
+
+                const correctAnswerItem = document.createElement("li");
+                correctAnswerItem.textContent = correctAnswer;
+                outputCorrectAnswer.appendChild(correctAnswerItem);
+
+                const incorrectAnswers = this.tempQuestion.answers.filter(answer => !answer.isCorrect);
+
+                if (incorrectAnswers.length < 2) {
+                    displayAlert("Question should contain at least 2 incorrect answers");
+                    return;
+                }
+
+                const question = new Question(questionText);
+                question.addAnswer({ text: correctAnswer, isCorrect: true });
+
+                incorrectAnswers.forEach(answer => {
+                    question.addAnswer(answer);
+                });
+
+                quiz.addQuestion(question);
+
+                this.tempQuestion = new Question("");
+
+                questionInput.value = "";
+                correctAnswerInput.value = "";
+                incorrectAnswerInput.value = "";
+
+                outputQuestion.textContent = "";
+                outputCorrectAnswer.innerHTML = "";
+                outputIncorrectAnswers.innerHTML = "";
+
+                updateQuestionList();
+            });
         }
 
-        this.tempQuestion.addIncorrectAnswer(answer);
+        const startButton = getElementWrapper<HTMLButtonElement>("#btn-start-quiz");
 
-        const list = getElementWrapper<HTMLUListElement>('#output-incorrect-answers');
-
-        const li = document.createElement('li');
-        li.textContent = answer;
-
-        list.appendChild(li);
-
-        input.value = '';
-    }
-
-    private submitQuestion = () => {
-        const inputQuestion = getElementWrapper<HTMLInputElement>('#input-question');
-        const inputCorrectAnswer = getElementWrapper<HTMLInputElement>('#input-correct-answer');
-
-        const questionText = inputQuestion.value.trim();
-        const correctAnswer = inputCorrectAnswer.value.trim();
-
-        if (questionText.split(' ').filter(word => word !== '').length < 5) {
-            displayAlert('De vraag moet minstens 5 woorden bevatten');
-            return;
-        }
-
-        if (correctAnswer === '') {
-            displayAlert('Correct antwoord mag niet leeg zijn');
-            return;
-        }
-
-        if (this.tempQuestion.incorrectAnswers.length < 1) {
-            displayAlert('Er moet minstens 1 fout antwoord zijn');
-            return;
-        }
-
-        const question = new Question(questionText);
-
-        question.addCorrectAnswer(correctAnswer);
-
-        this.tempQuestion.incorrectAnswers.forEach(answer => {
-            question.addIncorrectAnswer(answer);
-        });
-
-        quiz.addQuestion(question);
-
-        this.updateQuestionCounter();
-        this.renderQuestions();
-
-        this.tempQuestion = new Question('');
-
-        inputQuestion.value = '';
-        inputCorrectAnswer.value = '';
-
-        getElementWrapper<HTMLUListElement>('#output-incorrect-answers').innerHTML = '';
-    }
-
-    private fetchQuestions = async () => {
-        const difficulty = getElementWrapper<HTMLSelectElement>('#input-difficulty').value as Difficulty;
-        const category = parseInt(getElementWrapper<HTMLSelectElement>('#input-category').value);
-        const button = getElementWrapper<HTMLButtonElement>('#btn-fetch-questions');
-
-        disableEl(button);
-
-        const questions = await questionService.getQuestions(
-            difficulty,
-            category,
-            quiz.quizDuration
-        );
-
-        questions.forEach(question => {
-            quiz.addQuestion(question);
-        });
-
-        this.updateQuestionCounter();
-        this.renderQuestions();
-
-        enableEl(button);
-    }
-
-    private updateQuestionCounter = () => {
-        const counter = getElementWrapper<HTMLSpanElement>('#question-counter');
-
-        counter.textContent = `(${quiz.questions.length}/${quiz.quizDuration})`;
-
-        if (quiz.questions.length >= quiz.quizDuration) {
-            enableEl(getElementWrapper<HTMLButtonElement>('#btn-start-quiz'));
-        } else {
-            disableEl(getElementWrapper<HTMLButtonElement>('#btn-start-quiz'));
-        }
-    }
-
-    private renderQuestions = () => {
-        const questionsDiv = getElementWrapper<HTMLDivElement>('#questions');
-
-        if (quiz.questions.length === 0) {
-            questionsDiv.innerHTML = 'No questions to display';
-            return;
-        }
-
-        questionsDiv.innerHTML = '';
-
-        quiz.questions.forEach(question => {
-            const p = document.createElement('p');
-            p.textContent = question.question;
-            questionsDiv.appendChild(p);
+        startButton.addEventListener("click", () => {
+            quiz.startQuiz();
+            quizPage.init(contentElement);
         });
     }
 }
